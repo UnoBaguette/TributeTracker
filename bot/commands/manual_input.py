@@ -1,24 +1,16 @@
-def handle_manual_input(item_name, item_value, category):
-    """
-    Processes manual input from the user and updates item values.
-    
-    Args:
-        item_name (str): The name of the item.
-        item_value (float): The value of the item.
-        category (str): The category of the item.
-    
-    Returns:
-        dict: A dictionary containing the updated item values and totals.
-    """
-    # Here you would typically update your data storage with the new item value
-    # For example, you might append to a list or update a database
+import re
 
-    # This is a placeholder for the actual implementation
-    updated_data = {
-        "item_name": item_name,
-        "item_value": item_value,
-        "category": category,
-        "status": "updated"
-    }
-    
-    return updated_data
+from utils.currency_conversion import convert_currency
+from config.structures import Currency, get_currency_from_amount
+
+
+
+def perform_manual_tribute_input(amount, user, current_totals_info):
+    from_currency = get_currency_from_amount(amount)
+    amount = float(re.sub("[^\d\.]", "", amount))
+    amount = convert_currency(amount, from_currency, Currency.USD)
+    try:
+        current_totals_info[str(user.id)] += amount
+    except KeyError:
+        current_totals_info[str(user.id)] = amount
+    return current_totals_info

@@ -1,6 +1,7 @@
-def load_data(file_path):
+import json
+
+def load_data(file_path) -> dict:
     """Load data from a JSON file."""
-    import json
     try:
         with open(file_path, 'r') as file:
             data = json.load(file)
@@ -10,8 +11,7 @@ def load_data(file_path):
     except json.JSONDecodeError:
         return {}
 
-def save_data(file_path, data):
+def save_data(file_path: str, data: dict) -> None:
     """Save data to a JSON file."""
-    import json
     with open(file_path, 'w') as file:
         json.dump(data, file, indent=4)
