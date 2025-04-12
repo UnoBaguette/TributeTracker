@@ -6,6 +6,7 @@ from commands.manual_input import perform_manual_tribute_input
 from utils.data_handler import load_data, save_data
 from config.settings import TOKEN, PREFIX, ITEMS_DATA_FILE
 from dotenv import load_dotenv
+import datetime as dt
 
 load_dotenv()
 global current_data
@@ -68,11 +69,13 @@ async def tribute(ctx, amount: str, user: discord.User = None):
         return
     global current_data
     user = user or ctx.author
-    current_data = perform_manual_tribute_input(amount, user, current_data)
+    month_number = dt.datetime.now().month
+    current_data = perform_manual_tribute_input(amount, user, month_number, current_data)
     
+    string_month = dt.datetime(year=dt.datetime.now().year, month=month_number, day=1).strftime("%B")
     await ctx.send(
-        f"✅ Tribute of {amount} received from {user.mention}\n"
-        f"Current total sent: ${round(current_data[str(user.id)], 2)}"
+        f"✅ Tribute of {amount} received from {user.mention}\n"+
+        get_tribute_info(user)
     )
 
 @bot.command()
@@ -80,7 +83,7 @@ async def check(ctx: discord.Interaction, user: discord.User = None):
     global current_data
     user = user or ctx.author
     await ctx.send(
-        f"Current total sent by {user.mention}: ${round(current_data[str(user.id)], 2)}"
+        get_tribute_info(user)
     )
 
 
@@ -95,6 +98,13 @@ def save_on_exit():
 async def on_disconnect():
     """Triggered when bot disconnects"""
     save_on_exit()
+
+def get_tribute_info(user: discord.User) -> str:
+    global current_data
+    user_info = current_data[str(user.id)]
+    grand_total = sum(user_info)
+    month_string = dt.datetime.now().strftime("%B")
+    return f"{user.mention} Current Month Total For {month_string} = ${user_info[dt.datetime.now().month-1]}\nGrand Total = ${grand_total}"
 
 # Register shutdown handler
 atexit.register(save_on_exit)
