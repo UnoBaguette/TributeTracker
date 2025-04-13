@@ -1,17 +1,17 @@
 # TributeTracker
 
-This project is a Discord bot that tracks the total value of items and categorical totals. It supports both manual and external inputs for updating item values.
+This project is a Discord bot that tracks the total value of items and categorical totals. 
 
 ## Features
 
 - **Manual Input**: Users can manually input item values, which will be processed and updated in the system.
-- **External Input**: The bot can also handle data from external sources to update item values.
-- **Total Value Calculation**: The bot calculates the total value of all items and provides categorical totals.
+- **Currency Conversion**: Users can specify both their desired currency and total other compatible currencies as they go.
+- **Total Value Calculation**: The bot calculates the total value of all items and provides monthly totals.
 
 ## Project Structure
 
 ```
-discord-bot-project
+TributeTracker
 ├── bot
 │   ├── __init__.py
 │   ├── main.py
@@ -22,12 +22,14 @@ discord-bot-project
 │   ├── utils
 │   │   ├── __init__.py
 │   │   ├── calculations.py
+│   │   ├── currency_conversion.py
 │   │   └── data_handler.py
 │   └── config
 │       ├── __init__.py
-│       └── settings.py
+│       ├── settings.py
+│       └── structures.py
 ├── requirements.txt
-├── .env
+├── .env (REQUIRED BUT NOT INCLUDED IN REPO)
 └── README.md
 ```
 
@@ -36,7 +38,7 @@ discord-bot-project
 1. Clone the repository:
    ```
    git clone <repository-url>
-   cd discord-bot-project
+   cd TributeTracker
    ```
 
 2. Install the required dependencies:
@@ -58,7 +60,11 @@ discord-bot-project
 
 - Use the command prefix defined in `settings.py` to interact with the bot.
 - For manual input, use the designated command to submit item values.
-- For external input, ensure the data format matches the expected structure.
+
+## Future plans
+
+- Categorical filtering of totals coming soon.
+- External inputs (YouPay, Throne, etc.)
 
 ## Contributing
 
