@@ -5,6 +5,8 @@ from discord.ext import commands
 from commands.manual_input import perform_manual_tribute_input
 from utils.data_handler import load_data, save_data
 from config.settings import TOKEN, PREFIX, ITEMS_DATA_FILE
+from config.structures import Currency
+from utils.currency_conversion import convert_currency
 from dotenv import load_dotenv
 import datetime as dt
 
@@ -25,7 +27,7 @@ async def on_ready():
     print('🔄 Syncing commands...')
     await bot.tree.sync()  # Sync slash commands
     print('🔹 Registered commands:', [cmd.name for cmd in bot.commands])
-    await bot.change_presence(activity=discord.Game(name="Tracking tributes"))
+    await bot.change_presence(activity=discord.Game(name="Determining finsub statuses"))
 
 # Add this error handler
 @bot.event
@@ -40,6 +42,35 @@ async def ping(ctx):
     """Check if bot is responsive"""
     await ctx.send('🏓 Pong! Latency: {:.2f}ms'.format(bot.latency * 1000))
 
+@bot.command()
+async def help(ctx, command_string: str = None):
+    """Check if bot is responsive"""
+    if command_string is None:
+        await ctx.send(
+            "Current available commands:\n"
+            "\t!ping - give current latency & check if bot is available/working\n"
+            "\t!check @User - output current month and grand total associated with user mentioned,"
+                " or message author if none mentioned\n"
+            "\t!tribute [amt] @User: Add amt to user total doing currency conversion if necessary (Currently USD($), EUR(€),  & HUF only)"
+                " if @User is not provided, will be added to message author's amount. Output same as !check as well\n"
+            "\t!currency CUR: Set default currency for user author to be shown in !check messages, if currency is not supported will show an error\n"
+        )
+    else:
+        match command_string:
+            case "tribute":
+                await ctx.send(
+                    "!tribute [amt] @User: Add amt to user total doing currency conversion if necessary "
+                    "(Currently USD($), EUR(€),  & HUF only)"
+                    " if @User is not provided, will be added to message author's amount. Output same as !check as well\n"
+                   f"\t Examples:\n\t!tribute 100 {ctx.author.mention}\n\t!tribute €50"
+                )
+            case "currency":
+                await ctx.send(
+                    "!currency CUR: Set default currency for user author to be shown in !check messages, if currency is not supported will show an error\n"
+                   f"Current Currency options: {Currency._member_names_}"
+                )
+            case _:
+                await ctx.send("Unrecognized option for !help, current options are: !help tribute & !help currency")
 @bot.command(
     name="tribute",
     description="Record a tribute payment from a user. If there is no @user, assigns tribute amount to the user running the command.",
@@ -62,7 +93,7 @@ async def tribute(ctx, amount: str, user: discord.User = None):
     Examples:
     --------
     !tribute 100 @User
-    !tribute £50
+    !tribute €50
     """
     if amount is None:
         await ctx.send("❌ No amount given. Usage: `!tribute <amount> [@user]`")
@@ -86,6 +117,21 @@ async def check(ctx: discord.Interaction, user: discord.User = None):
         get_tribute_info(user)
     )
 
+@bot.command()
+async def currency(ctx: discord.Interaction, currency_string: str):
+    global current_data
+    try:
+        old_currency = Currency._member_map_[current_data[str(ctx.author.id)]["Currency"]]
+        new_currency = Currency._member_map_[currency_string.upper()]
+        current_data[str(ctx.author.id)]["Currency"] = new_currency.name.upper()
+        for i, amount in enumerate(current_data[str(ctx.author.id)]["Tributes"]):
+            if amount == 0.:
+                continue
+            current_data[str(ctx.author.id)]["Tributes"][i] = convert_currency(amount, old_currency, new_currency)
+        await ctx.send(f"Successfully changed {ctx.author.mention} default currency to {new_currency.name}")
+    except KeyError:
+        await ctx.send("Unrecognized currency type, please run <!help currency> to see currently supported currencies")
+    
 
 def save_on_exit():
     global current_data
@@ -101,10 +147,10 @@ async def on_disconnect():
 
 def get_tribute_info(user: discord.User) -> str:
     global current_data
-    user_info = current_data[str(user.id)]
+    user_info = current_data[str(user.id)]["Tributes"]
     grand_total = sum(user_info)
     month_string = dt.datetime.now().strftime("%B")
-    return f"{user.mention} Current Month Total For {month_string} = ${user_info[dt.datetime.now().month-1]}\nGrand Total = ${grand_total}"
+    return f"{user.mention} Current Month Total For {month_string} = ${round(user_info[dt.datetime.now().month-1], 2)}\nGrand Total = ${round(grand_total, 2)}"
 
 # Register shutdown handler
 atexit.register(save_on_exit)
