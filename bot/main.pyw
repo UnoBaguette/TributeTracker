@@ -27,7 +27,7 @@ async def on_ready():
     print('🔄 Syncing commands...')
     await bot.tree.sync()  # Sync slash commands
     print('🔹 Registered commands:', [cmd.name for cmd in bot.commands])
-    await bot.change_presence(activity=discord.Game(name="Determining finsub statuses"))
+    await bot.change_presence(activity=discord.Game(name="games with your wallet..."))
 
 # Add this error handler
 @bot.event
